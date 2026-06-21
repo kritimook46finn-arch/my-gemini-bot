@@ -6,7 +6,9 @@
     <title>Gemini AI Chatbot</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }
-        #chat-window { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #f9f9f9; }
+        #role-container { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        #system-role { padding: 8px; width: 100%; box-sizing: border-box; }
+        #chat-window { height: 350px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #f9f9f9; }
         .user-msg { color: blue; text-align: right; margin: 5px 0; }
         .ai-msg { color: green; text-align: left; margin: 5px 0; }
         #input-container { display: flex; }
@@ -17,6 +19,13 @@
 <body>
 
     <h2>Gemini AI Chatbot</h2>
+    
+    <!-- 1. ช่องกำหนดบทบาทเอไอ -->
+    <div id="role-container">
+        <label for="system-role"><b>กำหนดบทบาทให้ AI (เช่น: "คุณคือผู้เชี่ยวชาญด้านการเทรดทอง"):</b></label>
+        <input type="text" id="system-role" placeholder="พิมพ์บทบาทที่ต้องการให้ AI เป็นที่นี่..." value="คุณคือผู้ช่วยอัจฉริยะที่ตอบคำถามอย่างสุภาพ">
+    </div>
+
     <div id="chat-window"></div>
     
     <div id="input-container">
@@ -25,38 +34,59 @@
     </div>
 
     <script>
-        // ดักจับการกดปุ่มบนคีย์บอร์ดที่ช่องพิมพ์ข้อความ
-    document.getElementById('user-input').addEventListener('keydown', function(event) {
-        // ถ้าปุ่มที่กดคือ Enter
-        if (event.key === 'Enter') {
-            event.preventDefault(); // ป้องกันไม่ให้ขึ้นบรรทัดใหม่ในช่องพิมพ์
-            sendMessage();          // เรียกฟังก์ชันส่งข้อความทันที
-        }
-    });
+        // 2. ตัวแปรเก็บประวัติการคุย (Chat History) เพื่อให้เอไอมีความจำ
+        let chatHistory = [];
+
+        document.getElementById('user-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
         async function sendMessage() {
             const inputField = document.getElementById('user-input');
             const chatWindow = document.getElementById('chat-window');
+            const roleField = document.getElementById('system-role');
+            
             const message = inputField.value.trim();
+            const systemRole = roleField.value.trim();
             
             if (!message) return;
 
-            // แสดงข้อความของผู้ใช้บนหน้าจอ
+            // แสดงข้อความฝั่งผู้ใช้
             chatWindow.innerHTML += `<div class="user-msg"><b>คุณ:</b> ${message}</div>`;
             inputField.value = '';
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
+            // บันทึกคำถามของผู้ใช้ลงในประวัติ (ใช้โครงสร้างของ Gemini API คือ user และ model)
+            chatHistory.push({
+                role: "user",
+                parts: [{ text: message }]
+            });
+
             try {
-                // ส่งข้อความไปที่ Backend Serverless Function ของ Vercel
+                // ส่งทั้งข้อความล่าสุด ประวัติทั้งหมด และบทบาทไปที่ Backend
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        history: chatHistory,
+                        systemInstruction: systemRole
+                    })
                 });
                 
                 const data = await response.json();
                 
                 // แสดงข้อความตอบกลับจาก AI
                 chatWindow.innerHTML += `<div class="ai-msg"><b>AI:</b> ${data.reply}</div>`;
+                
+                // บันทึกคำตอบของ AI ลงในประวัติความจำด้วย
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: data.reply }]
+                });
+
             } catch (error) {
                 chatWindow.innerHTML += `<div class="ai-msg" style="color:red;"><b>ระบบ:</b> เกิดข้อผิดพลาดในการเชื่อมต่อ</div>`;
             }
