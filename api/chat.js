@@ -4,29 +4,38 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { message } = req.body;
+        // รับ history และ systemInstruction มาจาก Frontend
+        const { history, systemInstruction } = req.body;
         const apiKey = process.env.GEMINI_API_KEY; 
 
         if (!apiKey) {
             return res.status(500).json({ reply: 'ข้อผิดพลาด: ไม่พบ API Key บน Vercel' });
         }
         
+        // โครงสร้าง Request Body สำหรับส่งให้ Gemini แบบมีความจำและบทบาท
+        const requestBody = {
+            contents: history // ส่งประวัติการคุยทั้งหมดไป
+        };
+
+        // ถ้าผู้ใช้มีการพิมพ์กำหนดบทบาทมา ให้ใส่เพิ่มเข้าไปในระบบ
+        if (systemInstruction) {
+            requestBody.systemInstruction = {
+                parts: [{ text: systemInstruction }]
+            };
+        }
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: message }] }]
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
         
-        // ดักจับกรณีที่ Google ส่ง Error กลับมา (เช่น Key ผิด หรือ โควตาเต็ม)
         if (data.error) {
             return res.status(500).json({ reply: `Google API Error: ${data.error.message}` });
         }
 
-        // ตรวจสอบโครงสร้างข้อมูลก่อนดึงข้อความ เพื่อป้องกันการเกิด undefined
         if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
             const reply = data.candidates[0].content.parts[0].text;
             return res.status(200).json({ reply });
