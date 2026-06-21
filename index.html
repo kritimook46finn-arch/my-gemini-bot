@@ -25,6 +25,14 @@
     </div>
 
     <script>
+        // ดักจับการกดปุ่มบนคีย์บอร์ดที่ช่องพิมพ์ข้อความ
+    document.getElementById('user-input').addEventListener('keydown', function(event) {
+        // ถ้าปุ่มที่กดคือ Enter
+        if (event.key === 'Enter') {
+            event.preventDefault(); // ป้องกันไม่ให้ขึ้นบรรทัดใหม่ในช่องพิมพ์
+            sendMessage();          // เรียกฟังก์ชันส่งข้อความทันที
+        }
+    });
         async function sendMessage() {
             const inputField = document.getElementById('user-input');
             const chatWindow = document.getElementById('chat-window');
