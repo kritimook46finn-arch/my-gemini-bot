@@ -21,7 +21,6 @@
         body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .container { width: 100%; max-width: 900px; height: 85vh; background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Header CSS ปรับเพิ่มปุ่มลบแชท */
         .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.4); justify-content: space-between; }
         .chat-header i.fa-microchip { font-size: 24px; color: var(--secondary-accent); }
         .chat-header h2 { font-size: 20px; font-weight: 600; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -89,7 +88,7 @@
             <label>AI Role & Persona</label>
             <div class="role-input-wrapper">
                 <i class="fa-solid fa-user-gear"></i>
-                <input type="text" id="system-role" value="คุณคือผู้เชี่ยวชาญด้านการพัฒนา AI สำหรับวิเคราะห์กราฟและเทรดทองคำ (XAUUSD) บน MT5">
+                <input type="text" id="system-role" value="" placeholder="ระบุบทบาทของ AI ที่นี่ (ไม่บังคับ)...">
             </div>
         </div>
 
@@ -116,7 +115,6 @@
         
         document.getElementById('session-badge').innerText = 'ID: ' + sessionId;
 
-        // โหลดประวัติแชทเริ่มต้น
         window.onload = async function() {
             try {
                 const res = await fetch(`/api/chat?sessionId=${sessionId}`);
@@ -135,11 +133,8 @@
                         `;
                     });
                 } else {
-                    chatWindow.innerHTML = `
-                        <div class="msg-row ai-row">
-                            <div class="msg-bubble">สวัสดีครับ! ข้อมูลทั้งหมดซิงค์กับ Cloud เรียบร้อย พร้อมลุยเรื่องเทรดแล้วครับ</div>
-                        </div>
-                    `;
+                    // แก้ไขจุดที่ 2: ปล่อยให้หน้าจอแชทว่างเปล่าเมื่อไม่มีประวัติ (ลบข้อความทักทายออก)
+                    chatWindow.innerHTML = '';
                 }
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             } catch (err) {
@@ -147,9 +142,7 @@
             }
         };
 
-        // ฟังก์ชันล้างประวัติการคุย (New Chat)
         async function clearChat() {
-            // เด้งถามเพื่อยืนยันก่อนลบ (ป้องกันการเผลอกด)
             if (!confirm('คุณต้องการลบประวัติการแชทนี้และเริ่มหัวข้อใหม่ใช่หรือไม่?')) return;
 
             const chatWindow = document.getElementById('chat-window');
@@ -160,17 +153,13 @@
             `;
 
             try {
-                // ส่งคำสั่ง DELETE ไปยัง Backend
                 await fetch(`/api/chat?sessionId=${sessionId}`, {
                     method: 'DELETE'
                 });
                 
-                // เมื่อลบสำเร็จ ให้เคลียร์หน้าจอและแสดงข้อความเริ่มใหม่
-                chatWindow.innerHTML = `
-                    <div class="msg-row ai-row">
-                        <div class="msg-bubble">ประวัติถูกล้างเรียบร้อยแล้วครับ! เริ่มบทสนทนาใหม่ได้เลย 🚀</div>
-                    </div>
-                `;
+                // แก้ไขจุดที่ 3: เมื่อล้างประวัติสำเร็จ ก็ให้เคลียร์หน้าจอเป็นสีว่างๆ เลย ไม่ต้องขึ้นข้อความ
+                chatWindow.innerHTML = '';
+                
             } catch (error) {
                 chatWindow.innerHTML = `
                     <div class="msg-row ai-row">
