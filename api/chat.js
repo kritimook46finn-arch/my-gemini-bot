@@ -1,85 +1,83 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+// เชื่อมต่อฐานข้อมูล Upstash Redis (Vercel จะดึง Token ให้อัตโนมัติ)
+const redis = Redis.fromEnv(); 
 
 export default async function handler(req, res) {
-    // รับ Session ID ว่าใครกำลังคุยอยู่
     const sessionId = req.query.sessionId || (req.body && req.body.sessionId);
 
     if (!sessionId) {
         return res.status(400).json({ reply: 'ข้อผิดพลาด: ไม่พบ Session ID' });
     }
 
-    // 🟢 ฝั่ง GET: ใช้สำหรับดึงประวัติแชทตอนเปิดหน้าเว็บขึ้นมาใหม่
+    // 🟢 ฝั่ง GET: ดึงประวัติแชทตอนโหลดหน้าเว็บ
     if (req.method === 'GET') {
         try {
-            // ดึงข้อมูลจากฐานข้อมูล ถ้าไม่มีให้คืนค่า Array ว่าง
-            const history = await kv.get(`chat:${sessionId}`) || [];
+            const history = await redis.get(`chat:${sessionId}`) || [];
             return res.status(200).json({ history });
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
     }
 
-    // 🔵 ฝั่ง POST: รับข้อความใหม่ ยิงหา AI และเซฟลงฐานข้อมูล
+    // 🔵 ฝั่ง POST: คุยกับ Gemini และเซฟประวัติ
     if (req.method === 'POST') {
         try {
             const { message, systemInstruction } = req.body;
-            const apiKey = process.env.GROQ_API_KEY; 
-
-            if (!apiKey) return res.status(500).json({ reply: 'ไม่พบ GROQ_API_KEY' });
-
-            // 1. ดึงประวัติแชทเดิมของคนๆ นี้จาก Vercel KV
-            let history = await kv.get(`chat:${sessionId}`) || [];
-
-            // 2. จัดเตรียมรูปแบบข้อความส่งให้ Groq
-            const messages = [];
-            if (systemInstruction) {
-                messages.push({ role: "system", content: systemInstruction });
-            }
             
-            // แปลงประวัติเก่าให้เข้าโครงสร้าง API
+            // ดึง Key ของ Gemini จากระบบ Vercel
+            const apiKey = process.env.GEMINI_API_KEY; 
+
+            if (!apiKey) return res.status(500).json({ reply: 'ไม่พบ GEMINI_API_KEY ใน Vercel' });
+
+            // 1. ดึงประวัติแชทเก่าจากฐานข้อมูล
+            let history = await redis.get(`chat:${sessionId}`) || [];
+
+            // 2. จัดเตรียมโครงสร้างให้ Gemini (ต้องเป็น role: "user" และ "model")
+            const contents = [];
             history.forEach(msg => {
-                messages.push({ 
-                    role: msg.role === "user" ? "user" : "assistant", 
-                    content: msg.parts[0].text 
+                contents.push({
+                    role: msg.role === "user" ? "user" : "model",
+                    parts: [{ text: msg.parts[0].text }]
                 });
             });
             
-            // ใส่ข้อความล่าสุดของผู้ใช้
-            messages.push({ role: "user", content: message });
+            // ใส่คำถามล่าสุด
+            contents.push({ role: "user", parts: [{ text: message }] });
 
-            // 3. ยิง API หา Groq (llama-3.1-8b-instant)
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            const requestBody = { contents: contents };
+            
+            // ใส่ System Role (ถ้ามี)
+            if (systemInstruction) {
+                requestBody.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            // 3. ยิง API ไปที่โมเดลของ Google
+            const modelName = 'gemini-3.1-flash-lite';
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'llama-3.1-8b-instant',
-                    messages: messages,
-                    temperature: 0.7
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                return res.status(500).json({ reply: `Groq API Error: ${data.error?.message}` });
+                return res.status(500).json({ reply: `Gemini API Error: ${data.error?.message || 'Unknown Error'}` });
             }
 
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-                const reply = data.choices[0].message.content;
+            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                const reply = data.candidates[0].content.parts[0].text;
                 
-                // 4. เอาคำถามและคำตอบใหม่ ยัดใส่ประวัติ แล้วอัปเดตทับลง Vercel KV
+                // 4. อัปเดตประวัติแชทใหม่แล้วเซฟทับลงฐานข้อมูล
                 history.push({ role: "user", parts: [{ text: message }] });
                 history.push({ role: "model", parts: [{ text: reply }] });
                 
-                await kv.set(`chat:${sessionId}`, history);
+                await redis.set(`chat:${sessionId}`, history);
 
-                // คืนค่าแค่คำตอบ AI กลับไปให้หน้าเว็บ
                 return res.status(200).json({ reply });
             } else {
-                return res.status(500).json({ reply: 'โครงสร้างข้อมูลจาก Groq ไม่ถูกต้อง' });
+                return res.status(500).json({ reply: 'โครงสร้างข้อมูลจาก Google API ไม่ถูกต้อง' });
             }
 
         } catch (error) {
