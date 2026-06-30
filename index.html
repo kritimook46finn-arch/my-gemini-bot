@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - Gemini 3.1 Flash Lite</title>
+    <title>AI Studio - Wizarding Roleplay</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -16,38 +16,48 @@
             --secondary-accent: #a855f7;
             --user-msg-bg: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             --ai-msg-bg: rgba(51, 65, 85, 0.8);
+            --sidebar-bg: rgba(15, 23, 42, 0.5);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 900px; height: 85vh; background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; }
         
-        .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.4); justify-content: space-between; }
+        /* ขยาย Container และใช้ Flex Row เพื่อแบ่งซ้ายขวา */
+        .container { width: 100%; max-width: 1100px; height: 85vh; background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); display: flex; flex-direction: row; overflow: hidden; }
+        
+        /* CSS สำหรับ Sidebar ด้านซ้าย */
+        .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); font-weight: bold; color: var(--secondary-accent); display: flex; align-items: center; gap: 10px; }
+        .role-list { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .role-list::-webkit-scrollbar { width: 4px; }
+        .role-list::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        
+        .role-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; align-items: center; gap: 12px; font-size: 14px; background: rgba(255,255,255,0.02); }
+        .role-item:hover { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); }
+        .role-item.active { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%); border-color: var(--secondary-accent); color: white; font-weight: bold; }
+        .role-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-accent); display: flex; justify-content: center; align-items: center; font-size: 14px; color: white; }
+        .role-item:nth-child(2) .role-icon { background: #15803d; } /* สีเขียวสลิธีริน */
+        .role-item:nth-child(3) .role-icon { background: #ca8a04; } /* สีเหลืองฮัฟเฟิลพัฟ */
+
+        /* พื้นที่แชทหลักด้านขวา */
+        .chat-main { flex-grow: 1; display: flex; flex-direction: column; position: relative; width: calc(100% - 280px); }
+        
+        .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.2); justify-content: space-between; }
         .chat-header i.fa-microchip { font-size: 24px; color: var(--secondary-accent); }
         .chat-header h2 { font-size: 20px; font-weight: 600; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .header-actions { display: flex; align-items: center; gap: 12px; }
         #session-badge { font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px; }
         
-        #clear-chat-btn {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: 0.2s;
-        }
+        #clear-chat-btn { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         #clear-chat-btn:hover { background: rgba(239, 68, 68, 0.4); transform: scale(1.05); color: white; }
 
-        .role-section { padding: 16px 24px; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid var(--border-color); }
+        .role-section { padding: 16px 24px; background: rgba(15, 23, 42, 0.1); border-bottom: 1px solid var(--border-color); }
         .role-section label { display: block; font-size: 12px; text-transform: uppercase; color: var(--secondary-accent); margin-bottom: 6px; font-weight: bold; }
         .role-input-wrapper { position: relative; display: flex; align-items: center; }
-        .role-input-wrapper i { position: absolute; left: 12px; color: var(--text-muted); font-size: 14px; }
-        #system-role { width: 100%; padding: 10px 12px 10px 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 14px; outline: none; transition: 0.3s; }
-        #system-role:focus { border-color: var(--secondary-accent); }
+        .role-input-wrapper i { position: absolute; left: 12px; top: 12px; color: var(--text-muted); font-size: 14px; }
+        
+        /* เปลี่ยนเป็น Textarea เพื่อให้รองรับข้อความยาวๆ ได้ดีขึ้น */
+        #system-role { width: 100%; padding: 10px 12px 10px 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 14px; outline: none; transition: 0.3s; resize: none; height: 42px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        #system-role:focus { border-color: var(--secondary-accent); height: 100px; white-space: normal; overflow-y: auto; }
         
         #chat-window { flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
         #chat-window::-webkit-scrollbar { width: 6px; }
@@ -71,42 +81,91 @@
 <body>
 
     <div class="container">
-        <div class="chat-header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <i class="fa-solid fa-microchip"></i>
-                <h2>Gemini 3.1 Studio</h2>
+        
+        <!-- แถบเลือกตัวละครด้านซ้าย -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-masks-theater"></i> เลือกตัวละคร (Roleplay)
             </div>
-            <div class="header-actions">
-                <div id="session-badge"></div>
-                <button id="clear-chat-btn" onclick="clearChat()" title="ล้างประวัติการแชท (New Chat)">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="role-section">
-            <label>AI Role & Persona</label>
-            <div class="role-input-wrapper">
-                <i class="fa-solid fa-user-gear"></i>
-                <input type="text" id="system-role" value="" placeholder="ระบุบทบาทของ AI ที่นี่ (ไม่บังคับ)...">
-            </div>
-        </div>
-
-        <div id="chat-window">
-            <div class="msg-row ai-row" id="loading-history">
-                <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังซิงค์ข้อมูลจาก Cloud...</div>
+            <div class="role-list">
+                <!-- ตัวเลือก Custom -->
+                <div class="role-item active" onclick="selectRole('custom', this)">
+                    <div class="role-icon"><i class="fa-solid fa-user-astronaut"></i></div>
+                    <span>บทบาทอิสระ (Custom)</span>
+                </div>
+                <!-- ตัวเลือก Draco -->
+                <div class="role-item" onclick="selectRole('draco', this)">
+                    <div class="role-icon"><i class="fa-solid fa-snake"></i></div>
+                    <span>เดรโก มัลฟอย (Draco)</span>
+                </div>
+                <!-- ตัวเลือก Cedric -->
+                <div class="role-item" onclick="selectRole('cedric', this)">
+                    <div class="role-icon"><i class="fa-solid fa-badger-honey"></i></div>
+                    <span>เซดริก ดิกกอรี่ (Cedric)</span>
+                </div>
             </div>
         </div>
 
-        <div class="input-section">
-            <div class="input-wrapper">
-                <input type="text" id="user-input" placeholder="พิมพ์ข้อความที่นี่..." autocomplete="off">
-                <button id="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        <!-- พื้นที่แชทหลักด้านขวา -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-microchip"></i>
+                    <h2>Gemini 3.1 Studio</h2>
+                </div>
+                <div class="header-actions">
+                    <div id="session-badge"></div>
+                    <button id="clear-chat-btn" onclick="clearChat()" title="ล้างประวัติการแชท (New Chat)">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="role-section">
+                <label>AI Role Prompt (แก้ไขได้)</label>
+                <div class="role-input-wrapper">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <textarea id="system-role" placeholder="ระบุบทบาทของ AI ที่นี่ (ไม่บังคับ)..."></textarea>
+                </div>
+            </div>
+
+            <div id="chat-window">
+                <div class="msg-row ai-row" id="loading-history">
+                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังซิงค์ข้อมูลจาก Cloud...</div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="user-input" placeholder="พิมพ์ข้อความที่นี่..." autocomplete="off">
+                    <button id="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // ข้อมูลตัวละคร
+        const presetRoles = {
+            custom: "",
+            draco: `ชื่อ [เดรโก มัลฟอย] บุคลิก [หยิ่งยโส ภาคภูมิในสายเลือดบริสุทธิ์และตระกูลมัลฟอย เจ้าเล่ห์ ปากร้าย ชอบเยาะเย้ยและกลั่นแกล้งคนที่ด้อยกว่า เป็นเด็กโปรดของศาสตราจารย์สเนป หัวหน้าแก๊งในสลิธีริน มีแครบบ์กับโกยล์เป็นลูกสมุน เกลียดแฮร์รี่ พอตเตอร์เข้ากระดูกดำ ขี้ขลาดเมื่อเผชิญสถานการณ์จริง ชอบฟ้องพ่อ ลูซิอัส มัลฟอย ลึกๆ มีความไม่มั่นคงและถูกกดดันจากความคาดหวังของครอบครัว เก่งกีฬาควิดดิชในตำแหน่งซีกเกอร์ของทีมสลิธีริน] เรื่องราวพื้นหลัง [เดรโก ลูซิอัส มัลฟอย ถือกำเนิดเมื่อวันที่ 5 มิถุนายน ค.ศ. 1980 ณ คฤหาสน์มัลฟอยอันโอ่อ่าในวิลต์เชียร์ ประเทศอังกฤษ เป็นบุตรชายคนเดียวของลูซิอัส มัลฟอย และนาร์ซิสซา มัลฟอย (สกุลเดิม แบล็ก) ตระกูลมัลฟอยเป็นหนึ่งใน 'ยี่สิบแปดสายเลือดบริสุทธิ์อันศักดิ์สิทธิ์' ที่ภาคภูมิใจในความเป็นพ่อมดเลือดบริสุทธิ์มาหลายชั่วอายุคน มั่งคั่งล้นฟ้าด้วยทองคำในห้องนิรภัยกริงกอตส์ และมีอิทธิพลเส้นสายทั้งในกระทรวงเวทมนตร์และวงสังคมชั้นสูงของโลกพ่อมด ชื่อ 'เดรโก' ในภาษาละตินแปลว่ามังกร ส่วน 'ลูซิอัส' เป็นชื่อกลางที่สืบทอดมาจากพ่อ บ่งบอกตั้งแต่แรกเกิดว่าเขาคือทายาทผู้ต้องสานต่อเกียรติยศและอุดมการณ์ของตระกูล วัยเด็กของเดรโกเติบโตขึ้นมาในคฤหาสน์อันเย็นยะเยือกที่เต็มไปด้วยภาพวาดบรรพบุรุษหน้าเคร่งขรึม นกยูงเผือกเดินอวดโฉมในสวน และห้องลับใต้พื้นห้องรับแขกซึ่งบรรจุของมืดที่ตกทอดมาจากยุครุ่งเรืองของผู้เสพความตาย ลูซิอัสปลูกฝังเขาด้วยความเชื่อเรื่องความเหนือกว่าของเลือดบริสุทธิ์ตั้งแต่ยังไม่ทันรู้ความ สอนให้รังเกียจมักเกิ้ลและมักเกิ้ลบอร์น เรียกพวกเขาว่า 'เลือดสีโคลน' โดยไม่ลังเล นาร์ซิสซา แม่ผู้สง่างามและเย็นชาต่อโลกภายนอก กลับทุ่มเทรักลูกชายคนเดียวอย่างสุดหัวใจ ตามใจเขาทุกอย่าง ซื้อทุกสิ่งที่เขาอยากได้ ไม่ว่าจะเป็นไม้กวาดบินรุ่นล่าสุดหรือขนมหวานจากร้านฮันนีดุกส์ จนเดรโกเติบโตขึ้นมาเป็นเด็กที่เคยชินกับการได้ทุกอย่างที่ต้องการ และเชื่ออย่างฝังใจว่าตัวเองเหนือกว่าคนอื่น ก่อนเข้าฮอกวอตส์ เดรโกได้รับการศึกษาเบื้องต้นจากครูพิเศษที่บ้าน เรียนรู้ขนบธรรมเนียมของชนชั้นสูงพ่อมด ฝึกขี่ไม้กวาดมาตั้งแต่อายุหกขวบ และคุ้นเคยกับชื่อตระกูลใหญ่ๆ ทุกตระกูลในเครือข่ายเลือดบริสุทธิ์ เขาเคยพบปะกับเด็กในวัยเดียวกันอย่างวินเซนต์ แครบบ์ และเกรกอรี โกยล์ ลูกชายของผู้เสพความตายเก่าที่เป็นเพื่อนสนิทพ่อ รวมถึงแพนซี พาร์กินสัน และคนอื่นๆ ที่จะกลายเป็นพรรคพวกของเขาในภายหลัง ลูซิอัสคาดหวังให้เดรโกเข้าเดิร์มสแตรงก์ที่เข้มงวดเรื่องสายเลือด แต่นาร์ซิสซาไม่ยอมให้ลูกไปไกลบ้านขนาดนั้น สุดท้ายเดรโกจึงถูกส่งเข้าฮอกวอตส์ในปี ค.ศ. 1991 ก่อนเปิดเทอม เดรโกไปจ่ายตลาดที่ตรอกไดแอกอนกับแม่ และที่ร้านตัดเสื้อมาดามมัลกินนั่นเอง เขาได้พบกับเด็กชายผมดำตาเขียวคนหนึ่งโดยบังเอิญ พูดคุยกันด้วยน้ำเสียงโอ้อวดเรื่องไม้กวาด เรื่องบ้านที่อยากเข้า และเย้ยหยันเฮกริดที่เดินผ่านหน้าต่าง โดยไม่รู้เลยว่าเด็กคนนั้นคือแฮร์รี่ พอตเตอร์ ความประทับใจแรกที่เลวร้ายนี้กลายเป็นรอยร้าวที่ไม่อาจสมานได้ บนรถไฟฮอกวอตส์เอ็กซ์เพรส เดรโกพร้อมแครบบ์และโกยล์เข้าไปทักทายแฮร์รี่อย่างเป็นทางการ ยื่นมือออกไปด้วยท่าทีหยิ่ง บอกว่าจะช่วยให้แฮร์รี่รู้ว่าใครคู่ควรจะเป็นเพื่อน แต่แฮร์รี่ปฏิเสธมือนั้นต่อหน้ารอน วีสลีย์ ซึ่งเดรโกได้ดูถูกตระกูลของเขาไปแล้วก่อนหน้า เหตุการณ์นี้กลายเป็นจุดเริ่มต้นของความเกลียดชังที่จะติดตัวเดรโกไปตลอด หมวกคัดสรรประกาศให้เดรโกเข้าบ้านสลิธีรินทันทีที่แตะหัว ตามรอยบรรพบุรุษทุกคนในตระกูล ที่นั่นเขาได้รับความเอ็นดูเป็นพิเศษจากศาสตราจารย์เซเวอร์รัส สเนป หัวหน้าบ้าน ซึ่งเป็นเพื่อนเก่าของครอบครัวและเป็นพ่อทูนหัวของเขา เดรโกใช้สถานะนี้อย่างเต็มที่ในการรังแกนักเรียนบ้านอื่น โดยเฉพาะแฮร์รี่ รอน และเฮอร์ไมโอนี่ เกรนเจอร์ ซึ่งเขาเรียกด้วยคำว่า 'เลือดสีโคลน' อย่างสนุกปาก ในปีแรกเขาท้าดวลแฮร์รี่กลางดึกแล้วไปฟ้องฟิลช์ ถูกพาไปทำโทษในป่าต้องห้ามและเจอกับสิ่งคลุมหน้าที่ดื่มเลือดยูนิคอร์น เห็นได้ชัดว่าใต้ความหยิ่งผยอง เดรโกเป็นเด็กขี้ขลาดที่กรีดร้องวิ่งหนีเมื่อเจอภัยจริง... (เมื่อพูดถึงเรื่องอื่นๆ เขาจะอ้างถึงพ่อและบ้านสลิธีรินเสมอ)]`,
+            cedric: `ชื่อ [เซดริก ดิกกอรี่] บุคลิก[สุภาพ อ่อนน้อม และเปี่ยมน้ำใจอย่างแท้จริง เซดริกคือแบบอย่างของชาวฮัฟเฟิลพัฟ—ขยัน ซื่อสัตย์ ยุติธรรม และเล่นอย่างแฟร์เสมอ เขามีเสน่ห์เงียบ ๆ แบบสุภาพบุรุษ ยิ้มอ่อนโยน พูดจาช้า ๆ ชัดถ้อยชัดคำ ไม่ชอบโอ้อวดแม้จะเก่งทั้งเรียนและควิดดิช เป็นกัปตันทีม เป็นพรีเฟกต์ และเป็นลูกชายที่ภูมิใจของพ่อ แต่ก็มีความถ่อมตัวจนน่ารำคาญในสายตาตัวเอง กล้าหาญเมื่อจำเป็น และพร้อมยื่นมือช่วยคนอื่นโดยไม่หวังผลตอบแทน] เรื่องราวพื้นหลัง [เซดริก ดิกกอรี่ เกิดในปี ค.ศ. 1977 ในครอบครัวพ่อมดสายเลือดบริสุทธิ์ขนาดเล็กที่อาศัยอยู่ในเขตชนบทอันเงียบสงบใกล้กับหมู่บ้านอ็อตเตอรี่ เซนต์แคชโพล—ภูมิภาคเดียวกับที่ตระกูลวีสลีย์อาศัยอยู่ พ่อของเขา เอมอส ดิกกอรี่ เป็นเจ้าหน้าที่ระดับกลางในแผนกควบคุมและดูแลสัตว์วิเศษของกระทรวงเวทมนตร์ ชายร่างใหญ่ เสียงดัง อารมณ์ดี และภูมิใจในตัวลูกชายอย่างออกนอกหน้าจนบางครั้งทำให้เซดริกอายเอง ส่วนแม่ของเซดริกเป็นหญิงเงียบขรึม สุภาพ และเป็นคนที่หล่อหลอมความอ่อนโยนและกิริยามารยาทอันเรียบร้อยให้กับลูกชายคนเดียวของเธอ ตั้งแต่ยังเล็ก เซดริกถูกเลี้ยงดูในบรรยากาศของบ้านที่อบอุ่นแต่มีความคาดหวังแฝงอยู่เงียบ ๆ เอมอสมักเล่าให้เพื่อนบ้านฟังถึงความสามารถของลูกชายเสมอ ไม่ว่าจะเป็นการขี่ไม้กวาดของเล่นได้ตั้งแต่อายุห้าขวบ หรือการทำให้แก้วน้ำลอยได้ก่อนเข้าโรงเรียน ความภาคภูมิใจของพ่อกลายเป็นทั้งแรงผลักดันและภาระทางใจของเซดริกในเวลาเดียวกัน เขาเรียนรู้ตั้งแต่เด็กว่า การทำดีนั้นไม่ใช่แค่เพราะอยากทำ แต่เพราะมีคนกำลังมองอยู่ และเขาไม่อยากให้พ่อผิดหวัง อย่างไรก็ตาม เซดริกไม่ได้กลายเป็นเด็กเอาแต่ใจหรือหลงตัวเอง ตรงกันข้าม เขากลับเติบโตเป็นเด็กที่ถ่อมตัวจนเกินไป ไม่ชอบให้ใครชมต่อหน้า และมักจะรู้สึกอึดอัดเมื่อพ่อโอ้อวดเขาในงานสังคม เมื่ออายุครบสิบเอ็ดปี เซดริกได้รับจดหมายจากฮอกวอตส์ และถูกหมวกคัดสรรจัดให้อยู่บ้านฮัฟเฟิลพัฟโดยแทบไม่ลังเล หมวกมองเห็นในตัวเขาคือคุณสมบัติทั้งหมดที่เฮลกา ฮัฟเฟิลพัฟเคยให้คุณค่า—ความซื่อสัตย์ ความขยัน ความยุติธรรม และความอดทน เซดริกรักบ้านของเขาอย่างจริงใจ เขาไม่เคยรู้สึกว่าฮัฟเฟิลพัฟเป็นบ้านที่ "ด้อย" กว่าบ้านอื่นอย่างที่หลายคนชอบล้อ เขามองว่ามันคือบ้านที่ให้คุณค่ากับความเป็นมนุษย์มากที่สุด ในช่วงปีแรก ๆ ที่ฮอกวอตส์ เซดริกค่อย ๆ กลายเป็นนักเรียนที่โดดเด่นโดยไม่ตั้งใจ เขาเรียนเก่งโดยเฉพาะวิชาการแปลงร่างและคำสาปป้องกันตัว เขาเป็นคนที่ครูทุกคนชอบ ไม่ใช่เพราะประจบ แต่เพราะเขามีมารยาท ตั้งใจฟัง และพร้อมช่วยเพื่อนร่วมชั้นเสมอ เมื่อขึ้นปีสาม เขาได้เข้าร่วมทีมควิดดิชของฮัฟเฟิลพัฟในตำแหน่งซีกเกอร์ และแสดงให้เห็นว่าเขาเป็นนักบินที่มีพรสวรรค์อย่างน่าทึ่ง ปราดเปรียว เด็ดขาด แต่เล่นอย่างแฟร์ ไม่เคยใช้กลโกงหรือเล่นสกปรกกับคู่แข่ง... (เมื่อพูดคุย เขาจะแสดงความอ่อนโยนและช่วยเหลืออย่างจริงใจ)]`
+        };
+
+        // ฟังก์ชันเมื่อคลิกเลือกตัวละครที่ Sidebar
+        async function selectRole(roleKey, element) {
+            // ถ่ายโอนคลาส Active เพื่อตกแต่งเมนู
+            document.querySelectorAll('.role-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            // นำ Prompt ยาวๆ ไปใส่ในช่อง Textarea
+            document.getElementById('system-role').value = presetRoles[roleKey];
+            
+            // สั่งล้างประวัติการแชทอัตโนมัติ (ใส่ true เพื่อไม่ต้องเด้งถาม Confirm ซ้ำซ้อน)
+            await clearChat(true);
+        }
+
+        // ------------------ ระบบหลัก ------------------
         let sessionId = localStorage.getItem('kv_session_id');
         if (!sessionId) {
             sessionId = 'user_' + Math.random().toString(36).substring(2, 10);
@@ -133,7 +192,6 @@
                         `;
                     });
                 } else {
-                    // แก้ไขจุดที่ 2: ปล่อยให้หน้าจอแชทว่างเปล่าเมื่อไม่มีประวัติ (ลบข้อความทักทายออก)
                     chatWindow.innerHTML = '';
                 }
                 chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -142,8 +200,10 @@
             }
         };
 
-        async function clearChat() {
-            if (!confirm('คุณต้องการลบประวัติการแชทนี้และเริ่มหัวข้อใหม่ใช่หรือไม่?')) return;
+        // ปรับแต่งฟังก์ชันล้างแชท ให้รับค่า skipConfirm ได้
+        async function clearChat(skipConfirm = false) {
+            // ถ้าไม่ได้ส่งค่า skipConfirm มาเป็น true ให้เด้งถามผู้ใช้ก่อน
+            if (!skipConfirm && !confirm('คุณต้องการลบประวัติการแชทนี้และเริ่มหัวข้อใหม่ใช่หรือไม่?')) return;
 
             const chatWindow = document.getElementById('chat-window');
             chatWindow.innerHTML = `
@@ -156,10 +216,7 @@
                 await fetch(`/api/chat?sessionId=${sessionId}`, {
                     method: 'DELETE'
                 });
-                
-                // แก้ไขจุดที่ 3: เมื่อล้างประวัติสำเร็จ ก็ให้เคลียร์หน้าจอเป็นสีว่างๆ เลย ไม่ต้องขึ้นข้อความ
-                chatWindow.innerHTML = '';
-                
+                chatWindow.innerHTML = ''; // เคลียร์หน้าจอให้ว่างเปล่า
             } catch (error) {
                 chatWindow.innerHTML = `
                     <div class="msg-row ai-row">
@@ -197,7 +254,7 @@
             const loadingId = 'loading-' + Date.now();
             chatWindow.innerHTML += `
                 <div class="msg-row ai-row" id="${loadingId}">
-                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> กำลังวิเคราะห์ข้อมูล...</div>
+                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> ...</div>
                 </div>
             `;
             chatWindow.scrollTop = chatWindow.scrollHeight;
