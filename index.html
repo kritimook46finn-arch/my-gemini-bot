@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini AI Chatbot - Pro Studio</title>
+    <title>AI Chatbot - Vercel KV Storage</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,286 +12,113 @@
             --border-color: rgba(99, 102, 241, 0.3);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --primary-accent: #6366f1; /* Indigo */
-            --secondary-accent: #a855f7; /* Purple */
+            --primary-accent: #6366f1;
+            --secondary-accent: #a855f7;
             --user-msg-bg: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             --ai-msg-bg: rgba(51, 65, 85, 0.8);
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px; /* ขยายหน้าต่างให้กว้างขึ้น */
-            height: 85vh;
-            background: var(--panel-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 50px rgba(99, 102, 241, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Header ส่วนหัว */
-        .chat-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(15, 23, 42, 0.4);
-        }
-
-        .chat-header i {
-            font-size: 24px;
-            color: var(--secondary-accent);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-        }
-
-        .chat-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            background: linear-gradient(to right, #fff, var(--text-muted));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Role Configuration ส่วนตั้งค่าบทบาท */
-        .role-section {
-            padding: 16px 24px;
-            background: rgba(15, 23, 42, 0.2);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .role-section label {
-            display: block;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--secondary-accent);
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-
-        .role-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .role-input-wrapper i {
-            position: absolute;
-            left: 12px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        #system-role {
-            width: 100%;
-            padding: 10px 12px 10px 38px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        #system-role:focus {
-            outline: none;
-            border-color: var(--secondary-accent);
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
-        }
-
-        /* Chat Window หน้าต่างข้อความ */
-        #chat-window {
-            flex-grow: 1;
-            padding: 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        /* Custom Scrollbar */
-        #chat-window::-webkit-scrollbar {
-            width: 6px;
-        }
-        #chat-window::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #chat-window::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.2);
-            border-radius: 10px;
-        }
-        #chat-window::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.4);
-        }
-
-        /* Message Bubbles กล่องข้อความ */
-        .msg-row {
-            display: flex;
-            width: 100%;
-        }
-
-        .msg-row.user-row {
-            justify-content: flex-end;
-        }
-
-        .msg-row.ai-row {
-            justify-content: flex-start;
-        }
-
-        .msg-bubble {
-            max-width: 75%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .user-row .msg-bubble {
-            background: var(--user-msg-bg);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-
-        .ai-row .msg-bubble {
-            background: var(--ai-msg-bg);
-            color: var(--text-main);
-            border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Input Area ส่วนพิมพ์ข้อความด้านล่าง */
-        .input-section {
-            padding: 20px 24px;
-            background: rgba(15, 23, 42, 0.4);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .input-wrapper {
-            display: flex;
-            gap: 12px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            padding: 6px 6px 6px 16px;
-            border-radius: 16px;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-        }
-
-        #user-input {
-            flex-grow: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 15px;
-            padding: 8px 0;
-        }
-
-        #user-input:focus {
-            outline: none;
-        }
-
-        #user-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        #send-btn {
-            background: var(--primary-accent);
-            color: white;
-            border: none;
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-
-        #send-btn:hover {
-            background: #4f46e5;
-            transform: scale(1.05);
-        }
-
-        #send-btn:active {
-            transform: scale(0.95);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 900px; height: 85vh; background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.4); justify-content: space-between; }
+        .chat-header i { font-size: 24px; color: var(--secondary-accent); }
+        .chat-header h2 { font-size: 20px; font-weight: 600; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .role-section { padding: 16px 24px; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid var(--border-color); }
+        .role-section label { display: block; font-size: 12px; text-transform: uppercase; color: var(--secondary-accent); margin-bottom: 6px; font-weight: bold; }
+        .role-input-wrapper { position: relative; display: flex; align-items: center; }
+        .role-input-wrapper i { position: absolute; left: 12px; color: var(--text-muted); font-size: 14px; }
+        #system-role { width: 100%; padding: 10px 12px 10px 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 14px; }
+        #chat-window { flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        .msg-row { display: flex; width: 100%; }
+        .msg-row.user-row { justify-content: flex-end; }
+        .msg-row.ai-row { justify-content: flex-start; }
+        .msg-bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+        .user-row .msg-bubble { background: var(--user-msg-bg); color: #fff; border-bottom-right-radius: 4px; }
+        .ai-row .msg-bubble { background: var(--ai-msg-bg); color: var(--text-main); border-bottom-left-radius: 4px; }
+        .input-section { padding: 20px 24px; background: rgba(15, 23, 42, 0.4); border-top: 1px solid var(--border-color); }
+        .input-wrapper { display: flex; gap: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); padding: 6px 6px 6px 16px; border-radius: 16px; align-items: center; }
+        #user-input { flex-grow: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; padding: 8px 0; outline: none; }
+        #send-btn { background: var(--primary-accent); color: white; border: none; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Header -->
         <div class="chat-header">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <h2>Gemini AI Studio Studio</h2>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fa-solid fa-cloud"></i>
+                <h2>AI Studio (Cloud Sync)</h2>
+            </div>
+            <div id="session-badge" style="font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px;"></div>
         </div>
 
-        <!-- Role Selector -->
         <div class="role-section">
-            <label for="system-role">AI Role & Persona</label>
+            <label>AI Role & Persona</label>
             <div class="role-input-wrapper">
                 <i class="fa-solid fa-user-gear"></i>
-                <input type="text" id="system-role" placeholder="เช่น: คุณคือผู้เชี่ยวชาญด้านการวิเคราะห์กราฟเทรดทอง..." value="คุณคือผู้ช่วยอัจฉริยะที่ตอบคำถามอย่างสุภาพและเป็นกันเอง">
+                <input type="text" id="system-role" value="คุณคือผู้ช่วยอัจฉริยะที่ตอบคำถามอย่างสุภาพและเป็นกันเอง">
             </div>
         </div>
 
-        <!-- Chat Window -->
         <div id="chat-window">
-            <!-- ข้อความท้อนรับเริ่มต้น -->
-            <div class="msg-row ai-row">
-                <div class="msg-bubble">สวัสดีครับ! มีอะไรให้ผมช่วยเหลือในวันนี้ไหมครับ? พิมพ์คุยกับผมได้เลยนะ</div>
+            <div class="msg-row ai-row" id="loading-history">
+                <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังซิงค์ข้อมูลจาก Cloud...</div>
             </div>
         </div>
 
-        <!-- Input Section -->
         <div class="input-section">
             <div class="input-wrapper">
-                <input type="text" id="user-input" placeholder="พิมพ์ข้อความคุยกับ AI ที่นี่..." autocomplete="off">
-                <button id="send-btn" onclick="sendMessage()">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
+                <input type="text" id="user-input" placeholder="พิมพ์ข้อความที่นี่..." autocomplete="off">
+                <button id="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
     <script>
-        // เริ่มต้นด้วยการนำข้อความต้อนรับใส่ในประวัติแชทด้วย เพื่อให้โครงสร้างสอดคล้อง
-        let chatHistory = [
-            {
-                role: "model",
-                parts: [{ text: "สวัสดีครับ! มีอะไรให้ผมช่วยเหลือในวันนี้ไหมครับ? พิมพ์คุยกับผมได้เลยนะ" }]
+        // 1. สร้างหรือดึง Session ID เพื่อระบุตัวตนของผู้ใช้เครื่องนี้
+        let sessionId = localStorage.getItem('kv_session_id');
+        if (!sessionId) {
+            sessionId = 'user_' + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem('kv_session_id', sessionId);
+        }
+        
+        // แสดง ID เล็กๆ บน Header ให้รู้ว่าเชื่อมต่อแล้ว
+        document.getElementById('session-badge').innerText = 'ID: ' + sessionId;
+
+        // 2. ดึงประวัติแชทจาก Vercel KV ทันทีที่โหลดหน้าเว็บเสร็จ
+        window.onload = async function() {
+            try {
+                const res = await fetch(`/api/chat?sessionId=${sessionId}`);
+                const data = await res.json();
+                
+                const chatWindow = document.getElementById('chat-window');
+                chatWindow.innerHTML = ''; // ล้างข้อความ Loading
+                
+                if (data.history && data.history.length > 0) {
+                    // ถ้ามีประวัติ ให้วาดประวัติเดิมลงไป
+                    data.history.forEach(msg => {
+                        const isUser = msg.role === "user";
+                        chatWindow.innerHTML += `
+                            <div class="msg-row ${isUser ? 'user-row' : 'ai-row'}">
+                                <div class="msg-bubble">${escapeHtml(msg.parts[0].text).replace(/\n/g, '<br>')}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    // ถ้าผู้ใช้ใหม่ ให้ขึ้นข้อความต้อนรับ
+                    chatWindow.innerHTML = `
+                        <div class="msg-row ai-row">
+                            <div class="msg-bubble">สวัสดีครับ! ประวัติการคุยของคุณจะถูกซิงค์ขึ้น Cloud อัตโนมัติแล้ว มีอะไรให้ผมช่วยไหมครับ?</div>
+                        </div>
+                    `;
+                }
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            } catch (err) {
+                document.getElementById('chat-window').innerHTML = `<div class="msg-row ai-row"><div class="msg-bubble" style="color:#ef4444;">โหลดประวัติล้มเหลว กรุณารีเฟรชหน้าเว็บ</div></div>`;
             }
-        ];
+        };
 
         document.getElementById('user-input').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
@@ -310,7 +137,7 @@
             
             if (!message) return;
 
-            // แสดงข้อความฝั่งผู้ใช้ (UI ใหม่)
+            // วาดข้อความผู้ใช้ลงบนหน้าจอทันที
             chatWindow.innerHTML += `
                 <div class="msg-row user-row">
                     <div class="msg-bubble">${escapeHtml(message)}</div>
@@ -319,52 +146,39 @@
             inputField.value = '';
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            chatHistory.push({
-                role: "user",
-                parts: [{ text: message }]
-            });
-
-            // สร้างข้อความ Loading รอระหว่าง AI กำลังประมวลผล
             const loadingId = 'loading-' + Date.now();
             chatWindow.innerHTML += `
                 <div class="msg-row ai-row" id="${loadingId}">
-                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> กำลังคิด...</div>
+                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> กำลังคิดและเซฟลง Cloud...</div>
                 </div>
             `;
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
+                // 3. ส่งข้อมูลไปที่ Backend (ส่งแค่ข้อความใหม่, บทบาท และ Session ID เท่านั้น)
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        history: chatHistory,
+                        sessionId: sessionId,
+                        message: message,
                         systemInstruction: systemRole
                     })
                 });
                 
                 const data = await response.json();
-                
-                // ลบกล่อง Loading ออก
                 document.getElementById(loadingId).remove();
                 
-                // แสดงข้อความตอบกลับจริงจาก AI
                 chatWindow.innerHTML += `
                     <div class="msg-row ai-row">
                         <div class="msg-bubble">${escapeHtml(data.reply).replace(/\n/g, '<br>')}</div>
                     </div>
                 `;
-                
-                chatHistory.push({
-                    role: "model",
-                    parts: [{ text: data.reply }]
-                });
-
             } catch (error) {
                 document.getElementById(loadingId).remove();
                 chatWindow.innerHTML += `
                     <div class="msg-row ai-row">
-                        <div class="msg-bubble" style="color:#ef4444; border: 1px solid #ef4444;">เกิดข้อผิดพลาดในระบบการเชื่อมต่อ</div>
+                        <div class="msg-bubble" style="color:#ef4444; border: 1px solid #ef4444;">เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์</div>
                     </div>
                 `;
             }
@@ -372,14 +186,8 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // ฟังก์ชันช่วยจัดการความปลอดภัยป้องกันการพังของ HTML จากตัวอักษรพิเศษ
         function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
     </script>
 </body>
