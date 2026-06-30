@@ -20,27 +20,50 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .container { width: 100%; max-width: 900px; height: 85vh; background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Header CSS ปรับเพิ่มปุ่มลบแชท */
         .chat-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.4); justify-content: space-between; }
-        .chat-header i { font-size: 24px; color: var(--secondary-accent); }
+        .chat-header i.fa-microchip { font-size: 24px; color: var(--secondary-accent); }
         .chat-header h2 { font-size: 20px; font-weight: 600; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        #session-badge { font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px; }
+        
+        #clear-chat-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.2s;
+        }
+        #clear-chat-btn:hover { background: rgba(239, 68, 68, 0.4); transform: scale(1.05); color: white; }
+
         .role-section { padding: 16px 24px; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid var(--border-color); }
         .role-section label { display: block; font-size: 12px; text-transform: uppercase; color: var(--secondary-accent); margin-bottom: 6px; font-weight: bold; }
         .role-input-wrapper { position: relative; display: flex; align-items: center; }
         .role-input-wrapper i { position: absolute; left: 12px; color: var(--text-muted); font-size: 14px; }
-        #system-role { width: 100%; padding: 10px 12px 10px 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 14px; outline: none; }
+        #system-role { width: 100%; padding: 10px 12px 10px 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 14px; outline: none; transition: 0.3s; }
         #system-role:focus { border-color: var(--secondary-accent); }
+        
         #chat-window { flex-grow: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
         #chat-window::-webkit-scrollbar { width: 6px; }
         #chat-window::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+        
         .msg-row { display: flex; width: 100%; }
         .msg-row.user-row { justify-content: flex-end; }
         .msg-row.ai-row { justify-content: flex-start; }
         .msg-bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
         .user-row .msg-bubble { background: var(--user-msg-bg); color: #fff; border-bottom-right-radius: 4px; }
         .ai-row .msg-bubble { background: var(--ai-msg-bg); color: var(--text-main); border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        
         .input-section { padding: 20px 24px; background: rgba(15, 23, 42, 0.4); border-top: 1px solid var(--border-color); }
-        .input-wrapper { display: flex; gap: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); padding: 6px 6px 6px 16px; border-radius: 16px; align-items: center; }
-        .input-wrapper:focus-within { border-color: var(--primary-accent); }
+        .input-wrapper { display: flex; gap: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); padding: 6px 6px 6px 16px; border-radius: 16px; align-items: center; transition: 0.3s;}
+        .input-wrapper:focus-within { border-color: var(--primary-accent); box-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
         #user-input { flex-grow: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; padding: 8px 0; outline: none; }
         #send-btn { background: var(--primary-accent); color: white; border: none; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         #send-btn:hover { background: #4f46e5; transform: scale(1.05); }
@@ -52,9 +75,14 @@
         <div class="chat-header">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <i class="fa-solid fa-microchip"></i>
-                <h2>Gemini 3.1 Studio (Cloud Sync)</h2>
+                <h2>Gemini 3.1 Studio</h2>
             </div>
-            <div id="session-badge" style="font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px;"></div>
+            <div class="header-actions">
+                <div id="session-badge"></div>
+                <button id="clear-chat-btn" onclick="clearChat()" title="ล้างประวัติการแชท (New Chat)">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
         </div>
 
         <div class="role-section">
@@ -88,6 +116,7 @@
         
         document.getElementById('session-badge').innerText = 'ID: ' + sessionId;
 
+        // โหลดประวัติแชทเริ่มต้น
         window.onload = async function() {
             try {
                 const res = await fetch(`/api/chat?sessionId=${sessionId}`);
@@ -117,6 +146,39 @@
                 document.getElementById('chat-window').innerHTML = `<div class="msg-row ai-row"><div class="msg-bubble" style="color:#ef4444;">โหลดประวัติล้มเหลว กรุณารีเฟรชหน้าเว็บ</div></div>`;
             }
         };
+
+        // ฟังก์ชันล้างประวัติการคุย (New Chat)
+        async function clearChat() {
+            // เด้งถามเพื่อยืนยันก่อนลบ (ป้องกันการเผลอกด)
+            if (!confirm('คุณต้องการลบประวัติการแชทนี้และเริ่มหัวข้อใหม่ใช่หรือไม่?')) return;
+
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML = `
+                <div class="msg-row ai-row">
+                    <div class="msg-bubble" style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> กำลังล้างความจำ AI...</div>
+                </div>
+            `;
+
+            try {
+                // ส่งคำสั่ง DELETE ไปยัง Backend
+                await fetch(`/api/chat?sessionId=${sessionId}`, {
+                    method: 'DELETE'
+                });
+                
+                // เมื่อลบสำเร็จ ให้เคลียร์หน้าจอและแสดงข้อความเริ่มใหม่
+                chatWindow.innerHTML = `
+                    <div class="msg-row ai-row">
+                        <div class="msg-bubble">ประวัติถูกล้างเรียบร้อยแล้วครับ! เริ่มบทสนทนาใหม่ได้เลย 🚀</div>
+                    </div>
+                `;
+            } catch (error) {
+                chatWindow.innerHTML = `
+                    <div class="msg-row ai-row">
+                        <div class="msg-bubble" style="color:#ef4444;">เกิดข้อผิดพลาดในการลบข้อมูล กรุณาลองใหม่</div>
+                    </div>
+                `;
+            }
+        }
 
         document.getElementById('user-input').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
