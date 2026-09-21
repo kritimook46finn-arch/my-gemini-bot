@@ -9,7 +9,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ reply: 'ข้อผิดพลาด: ไม่พบ Session ID' });
     }
 
-    // 🟢 ฝั่ง GET: ดึงประวัติแชท
     if (req.method === 'GET') {
         try {
             const history = await redis.get(`chat:${sessionId}`) || [];
@@ -19,10 +18,8 @@ export default async function handler(req, res) {
         }
     }
 
-    // 🔴 ฝั่ง DELETE: ล้างประวัติแชทใน Cloud (New Chat)
     if (req.method === 'DELETE') {
         try {
-            // ใช้คำสั่ง del เพื่อลบ Key ของผู้ใช้นี้ออกจากฐานข้อมูล Redis
             await redis.del(`chat:${sessionId}`);
             return res.status(200).json({ success: true, message: 'ลบประวัติเรียบร้อย' });
         } catch (error) {
@@ -30,10 +27,10 @@ export default async function handler(req, res) {
         }
     }
 
-    // 🔵 ฝั่ง POST: คุยกับ Gemini และเซฟประวัติ
     if (req.method === 'POST') {
         try {
-            const { message, systemInstruction } = req.body;
+            // รับค่า model ที่ผู้ใช้เลือกจากหน้าเว็บมาด้วย
+            const { message, systemInstruction, model } = req.body;
             const apiKey = process.env.GEMINI_API_KEY; 
 
             if (!apiKey) return res.status(500).json({ reply: 'ไม่พบ GEMINI_API_KEY ใน Vercel' });
@@ -55,7 +52,8 @@ export default async function handler(req, res) {
                 requestBody.systemInstruction = { parts: [{ text: systemInstruction }] };
             }
 
-            const modelName = 'gemini-3.1-flash-lite';
+            // ใช้ model ที่ส่งมา ถ้าไม่มีให้ใช้ 3.1 เป็นค่าเริ่มต้น
+            const modelName = model || 'gemini-3.1-flash-lite';
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
